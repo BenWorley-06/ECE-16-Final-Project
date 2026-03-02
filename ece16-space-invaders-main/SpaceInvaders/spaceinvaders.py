@@ -8,6 +8,8 @@ import sys
 from os.path import abspath, dirname
 from random import choice
 
+from moveassist import move_assist
+
 ''' ============================================================ '''
 import socket
 host = "127.0.0.1"
@@ -52,6 +54,7 @@ class Ship(sprite.Sprite):
         self.image = IMAGES['ship']
         self.rect = self.image.get_rect(topleft=(375, 540))
         self.speed = 5
+        self.last_dir=1
 
     def update(self, keys, *args):
         if keys[K_LEFT] and self.rect.x > 10:
@@ -66,6 +69,10 @@ class Ship(sprite.Sprite):
         if direction == "RIGHT" and self.rect.x < 740:
             self.rect.x += self.speed
         game.screen.blit(self.image, self.rect)
+
+    def update_move_assist(self,bullets):
+        delta_x = move_assist(self,bullets)
+        self.rect.x=min(max(10,self.rect.x+delta_x),740)
 
 
 class Bullet(sprite.Sprite):
@@ -685,6 +692,10 @@ class SpaceInvaders(object):
                     self.check_collisions()
                     self.create_new_ship(self.makeNewShip, currentTime)
                     self.make_enemies_shoot()
+
+                    # Add assist
+                    if self.player:
+                        self.player.update_move_assist(self.enemyBullets)
 
             elif self.gameOver:
                 currentTime = time.get_ticks()

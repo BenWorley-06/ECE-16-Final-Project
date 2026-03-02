@@ -381,6 +381,8 @@ class SpaceInvaders(object):
         self.life3 = Life(769, 3)
         self.livesGroup = sprite.Group(self.life1, self.life2, self.life3)
 
+        self.babyMode=False
+
     def reset(self, score):
         self.player = Ship()
         self.playerGroup = sprite.Group(self.player)
@@ -694,7 +696,7 @@ class SpaceInvaders(object):
                     self.make_enemies_shoot()
 
                     # Add assist
-                    if self.player:
+                    if self.player and self.babyMode:
                         self.player.update_move_assist(self.enemyBullets)
 
             elif self.gameOver:

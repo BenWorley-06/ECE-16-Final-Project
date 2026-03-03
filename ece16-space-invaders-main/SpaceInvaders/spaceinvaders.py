@@ -381,7 +381,7 @@ class SpaceInvaders(object):
         self.life3 = Life(769, 3)
         self.livesGroup = sprite.Group(self.life1, self.life2, self.life3)
 
-        self.babyMode=False
+        self.babyMode=True
 
     def reset(self, score):
         self.player = Ship()

@@ -46,12 +46,18 @@ void readAccelSensor() {
  * 4 == right
  */
 int getOrientation() {
+  Serial.print(ax);
+  Serial.print(",");
+  Serial.print(ay);
+  Serial.print(",");
+  Serial.println(az);
+
   int orientation = 0;
 
   // Subtract out the zeros
-  int x = ax - X_ZERO;
+  int z = ax - X_ZERO;
   int y = ay - Y_ZERO;
-  int z = az - Z_ZERO;
+  int x = az - Z_ZERO;
 
   // If ax has biggest magnitude, it's either left or right
   if(abs(x) >= abs(y) && abs(x) >= abs(z)) {

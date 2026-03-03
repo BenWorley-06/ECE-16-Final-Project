@@ -11,6 +11,7 @@ bool sending;
  * Initialize the various components of the wearable
  */
 void setup() {
+  Serial.begin(115200);
   setupAccelSensor();
   setupCommunication();
   setupDisplay();

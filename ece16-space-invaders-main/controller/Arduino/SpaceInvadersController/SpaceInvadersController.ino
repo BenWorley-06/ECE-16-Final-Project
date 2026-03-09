@@ -29,6 +29,7 @@ void setup() {
  */
 void loop() {
   // Parse command coming from Python (either "stop" or "start")
+  bool bullet_detected = false;
   String command = receiveMessage();
   if(command == "stop") {
     sending = false;
@@ -38,9 +39,14 @@ void loop() {
     sending = true;
     writeDisplay("Controller: On", 0, true);
   }
+  else if (command == "bullet"){
+    bullet_detected=true;
+  }
 
   // Send the orientation of the board
   if(sending && sampleSensors()) {
     sendMessage(String(getOrientation())+","+String(detectButton()));
   }
+
+  processLED(bullet_detected);
 }

@@ -4,10 +4,8 @@ H_RANGE = 50
 V_RANGE = 300
 CENTER_THRESHOLD = 8
 
-
-def move_assist(ship, bullets):
+def bullet_detection(ship,bullets):
     total_force = 0.0
-
     for b in bullets:
         dx = ship.rect.centerx - b.rect.centerx
         dy = ship.rect.centery - b.rect.centery
@@ -28,6 +26,10 @@ def move_assist(ship, bullets):
             ship.last_dir = direction
 
         total_force += direction * h_weight * v_weight
+    return total_force
+
+def move_assist(ship, bullets):
+    total_force = bullet_detection(ship,bullets)
 
     move = total_force * ship.speed
     move = max(-ship.speed, min(ship.speed, move))

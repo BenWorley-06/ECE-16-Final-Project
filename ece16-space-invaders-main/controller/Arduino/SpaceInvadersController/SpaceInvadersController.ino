@@ -16,6 +16,7 @@ void setup() {
   setupCommunication();
   setupDisplay();
   setupPhotoSensor();
+  setupButton();
   sending = false;
 
   writeDisplay("Ready...", 1, true);
@@ -40,6 +41,6 @@ void loop() {
 
   // Send the orientation of the board
   if(sending && sampleSensors()) {
-    sendMessage(String(getOrientation()));
+    sendMessage(String(getOrientation())+","+String(detectButton()));
   }
 }

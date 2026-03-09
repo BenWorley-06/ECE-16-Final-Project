@@ -9,6 +9,13 @@ from os.path import abspath, dirname
 from random import choice
 
 from moveassist import move_assist
+from movementsmoothing import smoothMovement
+from ECE16Lib.Circular_List import CircularList
+from ECE16Lib.Communication import Communication
+
+COMM_PORT="COM9"
+
+comms = Communication(COMM_PORT,115200)
 
 ''' ============================================================ '''
 import socket
@@ -55,6 +62,7 @@ class Ship(sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(375, 540))
         self.speed = 5
         self.last_dir=1
+        self.socketDirections = CircularList([],5) #  Store last 10 directional inputs
 
     def update(self, keys, *args):
         if keys[K_LEFT] and self.rect.x > 10:
@@ -64,15 +72,22 @@ class Ship(sprite.Sprite):
         game.screen.blit(self.image, self.rect)
 
     def update_udp_socket(self, direction):
+        dx=0
         if direction == "LEFT" and self.rect.x > 10:
-            self.rect.x -= self.speed
+            dx -= self.speed
         if direction == "RIGHT" and self.rect.x < 740:
-            self.rect.x += self.speed
+            dx += self.speed
+        self.socketDirections.add(dx)
+        self.rect.x+=dx
         game.screen.blit(self.image, self.rect)
 
-    def update_move_assist(self,bullets):
+    def update_move_assist(self,bullets,baby_mode):
         delta_x = move_assist(self,bullets)
-        self.rect.x=min(max(10,self.rect.x+delta_x),740)
+        if baby_mode:
+            self.rect.x=min(max(10,self.rect.x+delta_x),740)
+        if delta_x>0:
+            return True #   Bullet Detected
+        return False
 
 
 class Bullet(sprite.Sprite):
@@ -356,6 +371,7 @@ class SpaceInvaders(object):
         mixer.pre_init(44100, -16, 1, 4096)
         init()
         self.clock = time.Clock()
+        self.Paused=False
         self.caption = display.set_caption('Space Invaders')
         self.screen = SCREEN
         self.background = image.load(IMAGE_PATH + 'background.jpg').convert()
@@ -382,6 +398,8 @@ class SpaceInvaders(object):
         self.livesGroup = sprite.Group(self.life1, self.life2, self.life3)
 
         self.babyMode=True
+        self.babySound = mixer.Sound(SOUND_PATH + 'baby.mp3')
+        self.babySound.set_volume(0.3)
 
     def reset(self, score):
         self.player = Ship()
@@ -451,6 +469,12 @@ class SpaceInvaders(object):
             if self.should_exit(e):
                 sys.exit()
             if e.type == KEYDOWN:
+                if e.key == K_LALT:
+                    self.Paused = False if self.Paused else True
+                if e.key == K_b:
+                    self.babyMode = False if self.babyMode else True
+                    if self.babyMode:
+                        self.babySound.play()
                 if e.key == K_SPACE:
                     if len(self.bullets) == 0 and self.shipAlive:
                         if self.score < 1000:
@@ -481,6 +505,12 @@ class SpaceInvaders(object):
 
             if msg == "QUIT":
                 sys.exit()
+            if msg == "PAUSE":
+                self.Paused = False if self.Paused else True
+            if msg == "BABY":
+                self.babyMode = False if self.babyMode else True
+                if self.babyMode:
+                    self.babySound.play()
             if msg == "FIRE":
                 if len(self.bullets) == 0 and self.shipAlive:
                     if self.score < 1000:
@@ -677,6 +707,10 @@ class SpaceInvaders(object):
                 else:
                     currentTime = time.get_ticks()
                     self.play_main_music(currentTime)
+                    if self.Paused:
+                        self.check_input()
+                        self.check_input_udp_socket()
+                        continue
                     self.screen.blit(self.background, (0, 0))
                     self.allBlockers.update(self.screen)
                     self.scoreText2 = Text(FONT, 20, str(self.score), GREEN,
@@ -696,8 +730,9 @@ class SpaceInvaders(object):
                     self.make_enemies_shoot()
 
                     # Add assist
-                    if self.player and self.babyMode:
-                        self.player.update_move_assist(self.enemyBullets)
+                    if self.player:
+                        if self.player.update_move_assist(self.enemyBullets,self.babyMode):
+                            comms.send_message("bullet")
 
             elif self.gameOver:
                 currentTime = time.get_ticks()

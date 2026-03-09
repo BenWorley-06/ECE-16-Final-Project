@@ -3,7 +3,7 @@
 """
 
 from ECE16Lib.Communication import Communication
-from time import sleep
+from time import sleep,time
 import socket, pygame
 
 # Setup the Socket connection to the Space Invaders game
@@ -12,6 +12,8 @@ port = 65432
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 mySocket.connect((host, port))
 mySocket.setblocking(False)
+
+BABY_BUTTON_INTERVAL = 0.5
 
 class PygameController:
   comms = None
@@ -24,6 +26,8 @@ class PygameController:
     self.comms.send_message("stop")
     self.comms.clear()
 
+    prev_time_button = 0
+
     # 2. start streaming orientation data
     input("Ready to start? Hit enter to begin.\n")
     self.comms.send_message("start")
@@ -32,19 +36,29 @@ class PygameController:
     print("Use <CTRL+C> to exit the program.\n")
     while True:
       message = self.comms.receive_message()
+      current_time=time()
       if(message != None):
         command = None
-        message = int(message)
+        try:
+          (m1, m2) = message.split(',')
+        except ValueError:        # if corrupted data, skip the sample
+          continue
+        orientation = int(m1)
+        pauseButton = int(m2)
         # if message == 0:
         #   command = "FLAT"
         # if message == 1:
         #   command = "UP"
-        if message == 2:
+        if orientation == 2:
           command = "FIRE"
-        elif message == 3:
+        elif orientation == 3:
           command = "LEFT"
-        elif message == 4:
+        elif orientation == 4:
           command = "RIGHT"
+        
+        if pauseButton==1:
+          command = "PAUSE"
+          
 
         if command is not None:
           mySocket.send(command.encode("UTF-8"))

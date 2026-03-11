@@ -13,10 +13,6 @@ from movementsmoothing import smoothMovement
 from ECE16Lib.Circular_List import CircularList
 from ECE16Lib.Communication import Communication
 
-COMM_PORT="COM9"
-
-comms = Communication(COMM_PORT,115200)
-
 ''' ============================================================ '''
 import socket
 host = "127.0.0.1"
@@ -24,6 +20,12 @@ port = 65432
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 mySocket.bind((host, port))
 mySocket.setblocking(0)
+''' ===== sending data to controller ===== '''
+
+controller_host = "127.0.0.1"
+controller_port = 65433
+
+controllerSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 ''' ============================================================ '''
 
 BASE_PATH = abspath(dirname(__file__))
@@ -732,7 +734,7 @@ class SpaceInvaders(object):
                     # Add assist
                     if self.player:
                         if self.player.update_move_assist(self.enemyBullets,self.babyMode):
-                            comms.send_message("bullet")
+                            controllerSocket.sendto("BULLET".encode(), ("127.0.0.1",65433))
 
             elif self.gameOver:
                 currentTime = time.get_ticks()

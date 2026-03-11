@@ -13,6 +13,14 @@ mySocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 mySocket.connect((host, port))
 mySocket.setblocking(False)
 
+# Socket connection from game to controller
+game_host = "127.0.0.1"
+game_port = 65433
+
+gameSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+gameSocket.bind((game_host, game_port))
+gameSocket.setblocking(False)
+
 BABY_BUTTON_INTERVAL = 0.5
 
 class PygameController:
@@ -35,6 +43,14 @@ class PygameController:
     # 3. Forever collect orientation and send to PyGame until user exits
     print("Use <CTRL+C> to exit the program.\n")
     while True:
+      try:
+        msg, _ = gameSocket.recvfrom(1024)
+        msg = msg.decode("utf-8")
+        if msg == "BULLET":
+            self.comms.send_message("BULLET")
+      except BlockingIOError:
+          pass
+
       message = self.comms.receive_message()
       current_time=time()
       if(message != None):
@@ -59,13 +75,13 @@ class PygameController:
         if pauseButton==1:
           command = "PAUSE"
           
-
         if command is not None:
           mySocket.send(command.encode("UTF-8"))
+        
 
 
 if __name__== "__main__":
-  serial_name = "COM9"
+  serial_name = "COM4"
   baud_rate = 115200
   controller = PygameController(serial_name, baud_rate)
 

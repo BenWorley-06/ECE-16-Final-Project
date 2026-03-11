@@ -1,4 +1,4 @@
-const int LED_PIN=17;
+const int LED_PIN=33;
 
 const int frequency = 2; // hz
 int period;

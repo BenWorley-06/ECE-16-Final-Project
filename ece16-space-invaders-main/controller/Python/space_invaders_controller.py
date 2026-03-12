@@ -61,28 +61,24 @@ class PygameController:
       if(message != None):
         command = None
         try:
-          (m1, m2) = message.split(',')
+          (m1, m2, m3) = message.split(',')
         except ValueError:        # if corrupted data, skip the sample
           continue
         orientation = int(m1)
         pauseButton = int(m2)
+        fireButton = int(m3)
         # if message == 0:
         #   command = "FLAT"
         # if message == 1:
         #   command = "UP"
-        if orientation == 2:
-          command = "FIRE"
-        elif orientation == 3:
+        if orientation == 3:
           command = "LEFT"
         elif orientation == 4:
           command = "RIGHT"
-        
-        if pauseButton == 1:
-          command = "PAUSE"
-          
         if command is not None:
           mySocket.send(command.encode("UTF-8"))
-
+        if fireButton == 1:
+          mySocket.send("FIRE".encode("UTF-8"))
         if pauseButton == 1 and prev_pause_state == 0 and (current_time - prev_time_button) > PAUSE_COOLDOWN:
           mySocket.send("PAUSE".encode("UTF-8"))
           pause_sent = True 

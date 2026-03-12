@@ -58,7 +58,7 @@ void loop() {
 
   // Send the orientation of the board
   if(sending && sampleSensors()) {
-    sendMessage(String(getOrientation())+","+String(detectButton()));
+    sendMessage(String(getOrientation()) + "," + String(detectButton()) + "," + String(detectFireButton()));
   }
 
   processLED(bullet_detected);

@@ -6,7 +6,7 @@ int ax = 0; int ay = 0; int az = 0;
 int ppg = 0;        // PPG from readPhotoSensor() (in Photodetector tab)
 int sampleTime = 0; // Time of last sample (in Sampling tab)
 bool sending;
-
+String currentLives = "3";
 /*
  * Initialize the various components of the wearable
  */
@@ -41,6 +41,19 @@ void loop() {
   }
   else if (command == "bullet"){
     bullet_detected=true;
+  }
+  else if(command.startsWith("lives:")) {
+    currentLives = command.substring(6);
+    String msg = "Lives: " + currentLives;
+    writeDisplay(msg.c_str(), 2, false);
+  }
+
+  else if(command.startsWith("score:")) {
+    String scoreVal = command.substring(6);
+    String scoreMsg = "Score: " + scoreVal;
+    writeDisplay(scoreMsg.c_str(), 1, true);
+    String livesMsg = "Lives: " + currentLives;
+    writeDisplay(livesMsg.c_str(), 2, false);
   }
 
   // Send the orientation of the board

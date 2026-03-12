@@ -35,6 +35,7 @@ class PygameController:
     self.comms.clear()
 
     prev_time_button = 0
+    prev_pause_state = 0 
 
     # 2. start streaming orientation data
     input("Ready to start? Hit enter to begin.\n")
@@ -48,6 +49,10 @@ class PygameController:
         msg = msg.decode("utf-8")
         if msg == "BULLET":
             self.comms.send_message("BULLET")
+        elif msg.startswith("score:"):
+          self.comms.send_message(msg)
+        elif msg.startswith("lives:"):
+          self.comms.send_message(msg)
       except BlockingIOError:
           pass
 
@@ -72,8 +77,9 @@ class PygameController:
         elif orientation == 4:
           command = "RIGHT"
         
-        if pauseButton==1:
+        if pauseButton == 1 and prev_pause_state == 0:
           command = "PAUSE"
+          prev_pause_state = pauseButton
           
         if command is not None:
           mySocket.send(command.encode("UTF-8"))
@@ -81,7 +87,7 @@ class PygameController:
 
 
 if __name__== "__main__":
-  serial_name = "COM4"
+  serial_name = "/dev/cu.usbserial-110"
   baud_rate = 115200
   controller = PygameController(serial_name, baud_rate)
 

@@ -5,8 +5,8 @@
 /*
  * Configure the analog input pins to the accelerometer's 3 axes
  */
-const int X_PIN = A4;
-const int Y_PIN = A3;
+const int X_PIN = A3;
+const int Y_PIN = A4;
 const int Z_PIN = A2;
 
 /*

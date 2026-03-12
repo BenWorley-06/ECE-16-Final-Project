@@ -420,6 +420,7 @@ class SpaceInvaders(object):
         self.noteTimer = time.get_ticks()
         self.shipTimer = time.get_ticks()
         self.score = score
+        controllerSocket.sendto("lives:3".encode(),("127.0.0.1",65433))
         self.create_audio()
         self.makeNewShip = False
         self.shipAlive = True
@@ -570,6 +571,7 @@ class SpaceInvaders(object):
 
         score = scores[row]
         self.score += score
+        controllerSocket.sendto(("score:"+str(self.score)).encode(),("127.0.0.1",65433))
         return score
 
     def create_main_menu(self):
@@ -617,6 +619,8 @@ class SpaceInvaders(object):
             else:
                 self.gameOver = True
                 self.startGame = False
+            lives = sum([self.life1.alive(),self.life2.alive(),self.life3.alive()])
+            controllerSocket.sendto(("lives:"+str(lives)).encode(),("127.0.0.1",65433))
             self.sounds['shipexplosion'].play()
             ShipExplosion(player, self.explosionsGroup)
             self.makeNewShip = True

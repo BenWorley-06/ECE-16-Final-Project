@@ -1,4 +1,4 @@
-const int BUTTON_PIN=14;
+const int BUTTON_PIN=27;
 int prevVal=1;
 
 unsigned long time_since_push=0;

@@ -374,6 +374,7 @@ class SpaceInvaders(object):
         init()
         self.clock = time.Clock()
         self.Paused=False
+        self.last_pause_time = 0
         self.caption = display.set_caption('Space Invaders')
         self.screen = SCREEN
         self.background = image.load(IMAGE_PATH + 'background.jpg').convert()
@@ -509,7 +510,10 @@ class SpaceInvaders(object):
             if msg == "QUIT":
                 sys.exit()
             if msg == "PAUSE":
-                self.Paused = False if self.Paused else True
+                current_time = time.get_ticks()
+                if current_time - self.last_pause_time > 500: 
+                    self.Paused = False if self.Paused else True
+                    self.last_pause_time = current_time
             if msg == "BABY":
                 self.babyMode = False if self.babyMode else True
                 if self.babyMode:

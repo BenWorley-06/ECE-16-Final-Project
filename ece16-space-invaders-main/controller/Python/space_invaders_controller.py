@@ -33,10 +33,10 @@ class PygameController:
     # 1. make sure data sending is stopped by ending streaming
     self.comms.send_message("stop")
     self.comms.clear()
-
+    PAUSE_COOLDOWN = 0.5
     prev_time_button = 0
-    prev_pause_state = 0 
-
+    prev_pause_state = 0
+    pause_sent = False 
     # 2. start streaming orientation data
     input("Ready to start? Hit enter to begin.\n")
     self.comms.send_message("start")
@@ -77,14 +77,18 @@ class PygameController:
         elif orientation == 4:
           command = "RIGHT"
         
-        if pauseButton == 1 and prev_pause_state == 0:
+        if pauseButton == 1:
           command = "PAUSE"
-          prev_pause_state = pauseButton
           
         if command is not None:
           mySocket.send(command.encode("UTF-8"))
-        
 
+        if pauseButton == 1 and prev_pause_state == 0 and (current_time - prev_time_button) > PAUSE_COOLDOWN:
+          mySocket.send("PAUSE".encode("UTF-8"))
+          pause_sent = True 
+        if pauseButton == 0:
+          pause_sent = False
+        prev_pause_state = pauseButton
 
 if __name__== "__main__":
   serial_name = "/dev/cu.usbserial-110"

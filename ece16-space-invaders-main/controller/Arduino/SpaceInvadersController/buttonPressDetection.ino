@@ -19,7 +19,8 @@ int detectButton() {
         digitalWrite(LED_BUILTIN, HIGH);
     }
     if (buttonVal == HIGH && prevVal == LOW) {
-        if (millis() - time_since_push > 50) {  
+        int dt = millis() - time_since_push;
+        if ( dt > 50) {  
             digitalWrite(LED_BUILTIN, LOW);
             pressed = 1;
         }
@@ -27,6 +28,8 @@ int detectButton() {
     prevVal = buttonVal;
     return pressed;
 }
+
+int 
 
 int detectFireButton() {
     int fireVal = digitalRead(FIRE_BUTTON_PIN);

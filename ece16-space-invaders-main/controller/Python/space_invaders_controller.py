@@ -11,6 +11,7 @@ TILT_MAX = 350
 SPEED_MIN = 2         
 SPEED_MAX = 15  
 
+
 # Setup the Socket connection to the Space Invaders game
 host = "127.0.0.1"
 port = 65432
@@ -53,6 +54,7 @@ class PygameController:
     self.comms.clear()
     PAUSE_COOLDOWN = 0.5
     prev_time_button = 0
+    prev_time_fire_button = 0
     prev_pause_state = 0
     pause_sent = False 
     # 2. start streaming orientation data
@@ -109,15 +111,22 @@ class PygameController:
           mySocket.send(f"{direction}:{speed}".encode("UTF-8"))
         if fireButton == 1:
           mySocket.send("FIRE".encode("UTF-8"))
+          prev_time_fire_button=current_time
         if pauseButton == 1 and prev_pause_state == 0 and (current_time - prev_time_button) > PAUSE_COOLDOWN:
           mySocket.send("PAUSE".encode("UTF-8"))
           pause_sent = True 
+          prev_time_button=current_time
         if pauseButton == 0:
           pause_sent = False
         prev_pause_state = pauseButton
+        if (current_time-prev_time_button) < BABY_BUTTON_INTERVAL and (current_time-prev_time_fire_button) < BABY_BUTTON_INTERVAL:
+          mySocket.send("BABY".encode("UTF-8"))
+          prev_time_button=0
+          prev_time_fire_button=0
+
 
 if __name__== "__main__":
-  serial_name = "/dev/cu.usbserial-110"
+  serial_name = "/dev/cu.MyOLED"
   baud_rate = 115200
   controller = PygameController(serial_name, baud_rate)
 

@@ -39,7 +39,7 @@ void loop() {
     sending = true;
     writeDisplay("Controller: On", 0, true);
   }
-  else if (command == "bullet"){
+  else if (command == "BULLET"){
     bullet_detected=true;
   }
   else if(command.startsWith("lives:")) {
@@ -62,4 +62,5 @@ void loop() {
   }
 
   processLED(bullet_detected);
+  
 }

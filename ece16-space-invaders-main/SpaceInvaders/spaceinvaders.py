@@ -73,14 +73,14 @@ class Ship(sprite.Sprite):
             self.rect.x += self.speed
         game.screen.blit(self.image, self.rect)
 
-    def update_udp_socket(self, direction):
+    def update_udp_socket(self, direction,speed=5):
         dx=0
         if direction == "LEFT" and self.rect.x > 10:
-            dx -= self.speed
+            dx -= speed
         if direction == "RIGHT" and self.rect.x < 740:
-            dx += self.speed
+            dx += speed
         self.socketDirections.add(dx)
-        self.rect.x+=dx
+        self.rect.x += dx
         game.screen.blit(self.image, self.rect)
 
     def update_move_assist(self,bullets,baby_mode):
@@ -502,46 +502,56 @@ class SpaceInvaders(object):
 
     ''' ============================================================ '''
     def check_input_udp_socket(self):
-        try:
-            msg, _ = mySocket.recvfrom(1024) # receive 1024 bytes
-            msg = msg.decode('utf-8')
-            print("Command: " + msg)
+        last_move = None 
 
-            if msg == "QUIT":
-                sys.exit()
-            if msg == "PAUSE":
-                current_time = time.get_ticks()
-                if current_time - self.last_pause_time > 500: 
-                    self.Paused = False if self.Paused else True
-                    self.last_pause_time = current_time
-            if msg == "BABY":
-                self.babyMode = False if self.babyMode else True
-                if self.babyMode:
-                    self.babySound.play()
-            if msg == "FIRE":
-                if len(self.bullets) == 0 and self.shipAlive:
-                    if self.score < 1000:
-                        bullet = Bullet(self.player.rect.x + 23,
+        while True:
+            try:
+                msg, _ = mySocket.recvfrom(1024)
+                msg = msg.decode('utf-8').strip()
+
+                if msg == "QUIT":
+                    sys.exit()
+                elif msg == "PAUSE":
+                    current_time = time.get_ticks()
+                    if current_time - self.last_pause_time > 500:
+                        self.Paused = False if self.Paused else True
+                        self.last_pause_time = current_time
+                elif msg == "BABY":
+                    self.babyMode = False if self.babyMode else True
+                    if self.babyMode:
+                        self.babySound.play()
+                elif msg == "FIRE":
+                    if len(self.bullets) == 0 and self.shipAlive:
+                        if self.score < 1000:
+                            bullet = Bullet(self.player.rect.x + 23,
                                         self.player.rect.y + 5, -1,
                                         15, 'laser', 'center')
-                        self.bullets.add(bullet)
-                        self.allSprites.add(self.bullets)
-                        self.sounds['shoot'].play()
-                    else:
-                        leftbullet = Bullet(self.player.rect.x + 8,
+                            self.bullets.add(bullet)
+                            self.allSprites.add(self.bullets)
+                            self.sounds['shoot'].play()
+                        else:
+                            leftbullet = Bullet(self.player.rect.x + 8,
                                             self.player.rect.y + 5, -1,
                                             15, 'laser', 'left')
-                        rightbullet = Bullet(self.player.rect.x + 38,
-                                                self.player.rect.y + 5, -1,
-                                                15, 'laser', 'right')
-                        self.bullets.add(leftbullet)
-                        self.bullets.add(rightbullet)
-                        self.allSprites.add(self.bullets)
-                        self.sounds['shoot2'].play()
-            else:
-                self.player.update_udp_socket(msg)
-        except BlockingIOError:
-            pass # do nothing if there's no data
+                            rightbullet = Bullet(self.player.rect.x + 38,
+                                             self.player.rect.y + 5, -1,
+                                             15, 'laser', 'right')
+                            self.bullets.add(leftbullet)
+                            self.bullets.add(rightbullet)
+                            self.allSprites.add(self.bullets)
+                            self.sounds['shoot2'].play()
+                elif msg.startswith("LEFT:") or msg.startswith("RIGHT:"):
+                    last_move = msg 
+
+            except BlockingIOError:
+                break 
+
+    # Apply only the most recent movement after draining queue
+        if last_move is not None:
+            parts = last_move.split(":")
+            direction = parts[0]
+            speed = int(parts[1])
+            self.player.update_udp_socket(direction, speed)
     ''' ============================================================ '''
 
     def make_enemies(self):

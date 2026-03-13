@@ -5,6 +5,11 @@
 from ECE16Lib.Communication import Communication
 from time import sleep,time
 import socket, pygame
+#Threshold values for ship speed 
+TILT_DEAD_ZONE = 100
+TILT_MAX = 350
+SPEED_MIN = 2         
+SPEED_MAX = 15  
 
 # Setup the Socket connection to the Space Invaders game
 host = "127.0.0.1"
@@ -28,7 +33,20 @@ class PygameController:
 
   def __init__(self, serial_name, baud_rate):
     self.comms = Communication(serial_name, baud_rate)
+  #Instead of getting binary orientation, read ax to get speed.
+  def get_speed_from_tilt(self, ax):
+    if abs(ax) < TILT_DEAD_ZONE:
+        return 0, None
 
+    clamped = max(-TILT_MAX, min(TILT_MAX, ax))
+    magnitude = abs(clamped)
+    speed = int(SPEED_MIN + (magnitude - TILT_DEAD_ZONE) /
+                (TILT_MAX - TILT_DEAD_ZONE) * (SPEED_MAX - SPEED_MIN))
+    speed = max(SPEED_MIN, min(SPEED_MAX, speed))
+
+    direction = "LEFT" if clamped < 0 else "RIGHT"
+    return speed, direction
+  
   def run(self):
     # 1. make sure data sending is stopped by ending streaming
     self.comms.send_message("stop")
@@ -40,7 +58,20 @@ class PygameController:
     # 2. start streaming orientation data
     input("Ready to start? Hit enter to begin.\n")
     self.comms.send_message("start")
-
+    #Calibrate for ax values
+    print("Calibrating, hold the board flat...")
+    ax_offset = 0
+    samples = []
+    while len(samples) < 20:
+        message = self.comms.receive_message()
+        if message != None:
+            try:
+                (m1, m2, m3) = message.split(',')
+                samples.append(int(m1))
+            except ValueError:
+                continue
+    ax_offset = sum(samples) // len(samples)
+    print(f"Calibration done. Offset: {ax_offset}")
     # 3. Forever collect orientation and send to PyGame until user exits
     print("Use <CTRL+C> to exit the program.\n")
     while True:
@@ -64,19 +95,18 @@ class PygameController:
           (m1, m2, m3) = message.split(',')
         except ValueError:        # if corrupted data, skip the sample
           continue
-        orientation = int(m1)
+        ax = int(m1) - ax_offset
         pauseButton = int(m2)
         fireButton = int(m3)
         # if message == 0:
         #   command = "FLAT"
         # if message == 1:
         #   command = "UP"
-        if orientation == 3:
-          command = "LEFT"
-        elif orientation == 4:
-          command = "RIGHT"
-        if command is not None:
-          mySocket.send(command.encode("UTF-8"))
+        #Send computed speed and direction to main
+        speed, direction = self.get_speed_from_tilt(ax)
+        print(f"ax: {ax}, speed: {speed}, direction: {direction}")
+        if direction is not None:
+          mySocket.send(f"{direction}:{speed}".encode("UTF-8"))
         if fireButton == 1:
           mySocket.send("FIRE".encode("UTF-8"))
         if pauseButton == 1 and prev_pause_state == 0 and (current_time - prev_time_button) > PAUSE_COOLDOWN:
